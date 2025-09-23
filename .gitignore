@@ -1,0 +1,11 @@
+.expo
+\expo
+node_modules/
+dist/
+build/
+out/
+*.pyc
+__pycache__/
+*.class
+*.o
+*.exe
