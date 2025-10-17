@@ -6,11 +6,11 @@ export type MenuSection = {
 export const menuData: MenuSection[] = [
   {
     title: 'Forretter',
-    items: ['Lokringer', 'Cheesy fries', 'Hvitloksdip og brod'],
+    items: ['Løkringer', 'Cheesy fries', 'Hvitløksdip og brød'],
   },
   {
     title: 'Hovedretter',
-    items: ['Entrecote og fries', 'Dagens fangst med fries', 'Hamburger med coleslaw og fries'],
+    items: ['Entrecôte og fries', 'Dagens fangst med fries', 'Hamburger med coleslaw og fries'],
   },
   {
     title: 'Dessert',
