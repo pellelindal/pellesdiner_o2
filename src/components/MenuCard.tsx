@@ -2,12 +2,19 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../theme';
 
-export default function MenuCard({ title, items }: { title: string; items: string[] }) {
+type MenuCardProps = {
+  title: string;
+  items: string[];
+};
+
+export default function MenuCard({ title, items }: MenuCardProps) {
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{title}</Text>
-      {items.map((line, i) => (
-        <Text key={i} style={styles.cardLine}>• {line}</Text>
+      {items.map((line, index) => (
+        <Text key={`${title}-${index}`} style={styles.cardLine}>
+          - {line}
+        </Text>
       ))}
     </View>
   );
