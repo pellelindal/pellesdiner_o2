@@ -9,3 +9,5 @@ __pycache__/
 *.class
 *.o
 *.exe
+android/
+android
