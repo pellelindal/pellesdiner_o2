@@ -10,6 +10,7 @@ export type CTAButtonProps = {
   variant?: CTAButtonVariant;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  disabled?: boolean;
 };
 
 export default function CTAButton({
@@ -18,15 +19,29 @@ export default function CTAButton({
   variant = 'primary',
   style,
   textStyle,
+  disabled = false,
 }: CTAButtonProps) {
   const isPrimary = variant === 'primary';
   return (
     <TouchableOpacity
-      activeOpacity={0.85}
+      activeOpacity={disabled ? 1 : 0.85}
+      disabled={disabled}
       onPress={onPress}
-      style={[styles.base, isPrimary ? styles.primary : styles.ghost, style]}
+      style={[
+        styles.base,
+        isPrimary ? styles.primary : styles.ghost,
+        disabled && styles.disabled,
+        style,
+      ]}
     >
-      <Text style={[styles.label, isPrimary ? styles.primaryLabel : styles.ghostLabel, textStyle]}>
+      <Text
+        style={[
+          styles.label,
+          isPrimary ? styles.primaryLabel : styles.ghostLabel,
+          disabled && styles.disabledLabel,
+          textStyle,
+        ]}
+      >
         {label}
       </Text>
     </TouchableOpacity>
@@ -47,6 +62,9 @@ const styles = StyleSheet.create({
   ghost: {
     backgroundColor: 'transparent',
   },
+  disabled: {
+    opacity: 0.6,
+  },
   label: {
     fontWeight: '700',
     textAlign: 'center',
@@ -56,5 +74,8 @@ const styles = StyleSheet.create({
   },
   ghostLabel: {
     color: colors.primary,
+  },
+  disabledLabel: {
+    color: '#7f7f7f',
   },
 });

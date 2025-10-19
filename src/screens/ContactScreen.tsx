@@ -1,5 +1,5 @@
-import React from 'react';
-import { SafeAreaView, ScrollView, View, Text, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { SafeAreaView, ScrollView, View, Text, StyleSheet, RefreshControl } from 'react-native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import Section from '../components/Section';
 import Header from '../components/Header';
@@ -7,6 +7,7 @@ import CTAButton from '../components/CTAButton';
 import InfoStrip from '../components/InfoStrip';
 import { colors } from '../theme';
 import { RootTabParamList } from '../navigation/types';
+import { Booking, fetchBookings } from '../api/bookings';
 
 type ContactScreenProps = BottomTabScreenProps<RootTabParamList, 'Kontakt'>;
 
@@ -18,9 +19,40 @@ const INFO_LINES = [
 
 export default function ContactScreen({ navigation }: ContactScreenProps) {
   const canGoBack = navigation.canGoBack();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadBookings = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
+    mode === 'initial' ? setLoading(true) : setRefreshing(true);
+    try {
+      setError(null);
+      const data = await fetchBookings();
+      setBookings(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kunne ikke hente reservasjoner.');
+    } finally {
+      mode === 'initial' ? setLoading(false) : setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBookings('initial');
+  }, [loadBookings]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={(
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadBookings('refresh')}
+            tintColor={colors.primary}
+          />
+        )}
+      >
         <Header
           showBack={canGoBack}
           onBack={() => navigation.goBack()}
@@ -48,9 +80,42 @@ export default function ContactScreen({ navigation }: ContactScreenProps) {
             <Text style={styles.cardLine}>Norge</Text>
           </View>
         </Section>
+        <Section title="Siste reservasjoner">
+          {loading ? <Text style={styles.metaText}>Laster reservasjoner…</Text> : null}
+          {error ? <Text style={styles.errorText}>Feil: {error}</Text> : null}
+          {bookings.length === 0 && !loading && !error ? (
+            <Text style={styles.metaText}>Ingen forespørsler registrert enda.</Text>
+          ) : null}
+          {bookings.map((booking) => (
+            <View key={booking.id} style={styles.bookingCard}>
+              <Text style={styles.bookingTitle}>{booking.name}</Text>
+              <Text style={styles.bookingLine}>Gjester: {booking.guestCount}</Text>
+              {booking.notes ? (
+                <Text style={styles.bookingLine}>Notat: {booking.notes}</Text>
+              ) : null}
+              {booking.createdAt ? (
+                <Text style={styles.bookingMeta}>Opprettet: {formatDate(booking.createdAt)}</Text>
+              ) : null}
+              {booking.updatedAt ? (
+                <Text style={styles.bookingMeta}>Oppdatert: {formatDate(booking.updatedAt)}</Text>
+              ) : null}
+            </View>
+          ))}
+        </Section>
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function formatDate(date: string) {
+  try {
+    return new Intl.DateTimeFormat('no-NO', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(new Date(date));
+  } catch {
+    return date;
+  }
 }
 
 const styles = StyleSheet.create({
@@ -67,4 +132,17 @@ const styles = StyleSheet.create({
   },
   cardTitle: { color: colors.text, fontWeight: '700', marginBottom: 8, fontSize: 16 },
   cardLine: { color: colors.muted, marginBottom: 4 },
+  metaText: { color: colors.muted, marginBottom: 12 },
+  errorText: { color: '#f87171', marginBottom: 12 },
+  bookingCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#222',
+    marginBottom: 12,
+  },
+  bookingTitle: { color: colors.text, fontWeight: '700', marginBottom: 4 },
+  bookingLine: { color: colors.muted, marginBottom: 2 },
+  bookingMeta: { color: colors.muted, fontSize: 12, marginTop: 6 },
 });

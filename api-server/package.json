@@ -1,0 +1,13 @@
+{
+  "name": "pelles-diner-api",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Mock REST API using json-server.",
+  "scripts": {
+    "start": "json-server --watch db.json --host 0.0.0.0 --port 80"
+  },
+  "dependencies": {
+    "json-server": "^0.17.4",
+    "restaurant-landing-structured": "file:.."
+  }
+}

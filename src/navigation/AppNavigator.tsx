@@ -13,7 +13,7 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 export default function AppNavigator() {
   return (
     <Tab.Navigator
-      id="MainTab"
+      id={undefined}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#fbbf24',

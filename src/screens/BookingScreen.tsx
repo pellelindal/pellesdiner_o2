@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, View, Text, StyleSheet, TextInput } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { SafeAreaView, ScrollView, View, Text, StyleSheet, TextInput, Alert } from 'react-native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import Section from '../components/Section';
 import Header from '../components/Header';
 import CTAButton from '../components/CTAButton';
 import { colors } from '../theme';
 import { RootTabParamList } from '../navigation/types';
+import {
+  Booking,
+  createBooking,
+  deleteBooking,
+  fetchBookings,
+  updateBooking,
+} from '../api/bookings';
 
 type BookingScreenProps = BottomTabScreenProps<RootTabParamList, 'Bestilling'>;
 
@@ -13,7 +20,111 @@ export default function BookingScreen({ navigation }: BookingScreenProps) {
   const [name, setName] = useState('');
   const [guestCount, setGuestCount] = useState('');
   const [notes, setNotes] = useState('');
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [latestBooking, setLatestBooking] = useState<Booking | null>(null);
   const canGoBack = navigation.canGoBack();
+
+  const loadLatest = useCallback(async () => {
+    try {
+      const data = await fetchBookings();
+      if (data.length > 0) {
+        const booking = data[0];
+        setLatestBooking(booking);
+        setName(booking.name);
+        setGuestCount(String(booking.guestCount));
+        setNotes(booking.notes);
+        setStatusMessage('Siste reservasjon lastet fra serveren.');
+      }
+    } catch (err) {
+      setStatusMessage('Kunne ikke hente tidligere reservasjoner.');
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLatest();
+  }, [loadLatest]);
+
+  const bookingPayload = useMemo(() => ({
+    name: name.trim(),
+    guestCount: Number(guestCount),
+    notes: notes.trim(),
+  }), [name, guestCount, notes]);
+
+  function validatePayload() {
+    if (!bookingPayload.name) {
+      Alert.alert('Ugyldig navn', 'Skriv inn ditt navn.');
+      return false;
+    }
+    if (!Number.isFinite(bookingPayload.guestCount) || bookingPayload.guestCount <= 0) {
+      Alert.alert('Ugyldig antall', 'Oppgi hvor mange som skal spise.');
+      return false;
+    }
+    return true;
+  }
+
+  const handleCreate = useCallback(async () => {
+    if (!validatePayload()) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const created = await createBooking(bookingPayload);
+      setLatestBooking(created);
+      setStatusMessage('Reservasjonen ble sendt til serveren.');
+      Alert.alert('Reservasjon sendt', 'Vi tar kontakt for å bekrefte.');
+    } catch (err) {
+      setStatusMessage(
+        err instanceof Error ? err.message : 'Kunne ikke sende reservasjonen.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }, [bookingPayload]);
+
+  const handleUpdate = useCallback(async () => {
+    if (!latestBooking) {
+      return;
+    }
+    if (!validatePayload()) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const updated = await updateBooking(latestBooking.id, bookingPayload, latestBooking);
+      setLatestBooking(updated);
+      setStatusMessage('Reservasjonen ble oppdatert.');
+      Alert.alert('Oppdatert', 'Reservasjonen er oppdatert hos oss.');
+    } catch (err) {
+      setStatusMessage(
+        err instanceof Error ? err.message : 'Kunne ikke oppdatere reservasjonen.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }, [bookingPayload, latestBooking]);
+
+  const handleDelete = useCallback(async () => {
+    if (!latestBooking) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await deleteBooking(latestBooking.id);
+      setLatestBooking(null);
+      setName('');
+      setGuestCount('');
+      setNotes('');
+      setStatusMessage('Reservasjonen er slettet.');
+      Alert.alert('Slettet', 'Reservasjonen ble fjernet.');
+    } catch (err) {
+      setStatusMessage(
+        err instanceof Error ? err.message : 'Kunne ikke slette reservasjonen.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }, [latestBooking]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -58,10 +169,28 @@ export default function BookingScreen({ navigation }: BookingScreenProps) {
               style={[styles.input, styles.multiline]}
             />
           </View>
+          {statusMessage ? <Text style={styles.status}>{statusMessage}</Text> : null}
           <CTAButton
             label="Send forespørsel"
-            onPress={() => navigation.navigate('Kontakt')}
+            onPress={handleCreate}
+            disabled={isSaving}
           />
+          <View style={styles.actionsRow}>
+            <CTAButton
+              label="Oppdater"
+              variant="ghost"
+              onPress={handleUpdate}
+              disabled={!latestBooking || isSaving}
+            />
+            <CTAButton
+              label="Slett"
+              variant="ghost"
+              onPress={handleDelete}
+              disabled={!latestBooking || isSaving}
+              style={styles.deleteButton}
+              textStyle={styles.deleteText}
+            />
+          </View>
         </Section>
         <Section title="Telefon og e-post">
           <Text style={styles.info}>
@@ -91,4 +220,8 @@ const styles = StyleSheet.create({
   },
   multiline: { minHeight: 96, textAlignVertical: 'top' },
   info: { color: colors.muted, lineHeight: 20 },
+  status: { color: colors.muted, marginBottom: 12 },
+  actionsRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
+  deleteButton: { borderColor: '#dc2626' },
+  deleteText: { color: '#dc2626' },
 });

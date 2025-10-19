@@ -1,0 +1,41 @@
+{
+  "menus": [
+    {
+      "id": 1,
+      "title": "Forretter",
+      "items": [
+        "Løkringer",
+        "Cheesy fries",
+        "Hvitløksdip og brød"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Hovedretter",
+      "items": [
+        "Entrecôte og fries",
+        "Dagens fangst med fries",
+        "Hamburger med coleslaw og fries"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Dessert",
+      "items": [
+        "Karamellpudding",
+        "Sjokoladekake",
+        "Pepperkake"
+      ]
+    }
+  ],
+  "bookings": [
+    {
+      "name": "Pelle",
+      "guestCount": 1,
+      "notes": "Q",
+      "updatedAt": "2025-10-19T20:34:46.983Z",
+      "createdAt": "2025-10-19T20:27:54.107Z",
+      "id": 2
+    }
+  ]
+}
