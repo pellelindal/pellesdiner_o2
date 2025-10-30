@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { SafeAreaView, ScrollView, View, Text, StyleSheet, RefreshControl } from 'react-native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import Section from '../components/Section';
@@ -8,6 +8,7 @@ import InfoStrip from '../components/InfoStrip';
 import { colors } from '../theme';
 import { RootTabParamList } from '../navigation/types';
 import { Booking, fetchBookings } from '../api/bookings';
+import { usePreferences } from '../context/PreferencesContext';
 
 type ContactScreenProps = BottomTabScreenProps<RootTabParamList, 'Kontakt'>;
 
@@ -19,10 +20,27 @@ const INFO_LINES = [
 
 export default function ContactScreen({ navigation }: ContactScreenProps) {
   const canGoBack = navigation.canGoBack();
+  const { preferences } = usePreferences();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const infoItems = useMemo(() => {
+    const items = [...INFO_LINES];
+    const parts: string[] = [];
+    if (preferences.name) parts.push(`Navn: ${preferences.name}`);
+    if (
+      preferences.defaultGuestCount !== undefined &&
+      Number.isFinite(preferences.defaultGuestCount)
+    ) {
+      parts.push(`Standard gjester: ${preferences.defaultGuestCount}`);
+    }
+    if (parts.length > 0) {
+      items.push(`Dine preferanser – ${parts.join(' | ')}`);
+    }
+    return items;
+  }, [preferences.name, preferences.defaultGuestCount]);
 
   const loadBookings = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
     mode === 'initial' ? setLoading(true) : setRefreshing(true);
@@ -57,7 +75,7 @@ export default function ContactScreen({ navigation }: ContactScreenProps) {
           showBack={canGoBack}
           onBack={() => navigation.goBack()}
         />
-        <InfoStrip items={INFO_LINES} />
+        <InfoStrip items={infoItems} />
         <Section title="Kontakt oss">
           <Text style={styles.body}>
             Vi er glade for å høre fra deg! Du kan sende oss en melding, ringe eller besøke oss i

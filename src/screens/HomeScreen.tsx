@@ -14,6 +14,7 @@ import { colors } from '../theme';
 import { MenuSection } from '../data/menu';
 import { RootTabParamList } from '../navigation/types';
 import { fetchMenus } from '../api/menu';
+import { usePreferences } from '../context/PreferencesContext';
 
 type HomeScreenProps = BottomTabScreenProps<RootTabParamList, 'Hjem'>;
 
@@ -31,6 +32,7 @@ const DEFAULT_INFO = [
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const heroImage = require('../../assets/hero.jpg');
 
+  const { preferences, updatePreferences } = usePreferences();
   const [infoItems, setInfoItems] = useState<string[]>(DEFAULT_INFO);
   const [menus, setMenus] = useState<MenuSection[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('Alle');
@@ -38,6 +40,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [appliedPrefCategory, setAppliedPrefCategory] = useState<boolean>(false);
   const canGoBack = navigation.canGoBack();
 
   const categories = useMemo(() => ['Alle', ...menus.map((menu) => menu.title)], [menus]);
@@ -79,6 +82,36 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     loadMenus('initial');
   }, [loadMenus]);
 
+  // Apply persisted last category once menus have loaded
+  useEffect(() => {
+    if (appliedPrefCategory) return;
+    if (menus.length === 0) return;
+    const pref = preferences.lastCategory;
+    if (!pref) {
+      setAppliedPrefCategory(true);
+      return;
+    }
+    if (pref === 'Alle') {
+      setActiveCategory('Alle');
+      setSelectedMenu(null);
+      setInfoItems(DEFAULT_INFO);
+      setAppliedPrefCategory(true);
+      return;
+    }
+    const found = menus.find(m => m.title === pref) ?? null;
+    if (found) {
+      setActiveCategory(found.title);
+      setSelectedMenu(found);
+      setInfoItems([
+        `Du ser nǾ menyen for ${found.title.toLowerCase()}.`,
+        'Trykk pǾ et kort for Ǿ se detaljene.',
+      ]);
+      setAppliedPrefCategory(true);
+    } else {
+      setAppliedPrefCategory(true);
+    }
+  }, [menus, preferences.lastCategory, appliedPrefCategory]);
+
   const heroActions = useMemo(
     () => [
       {
@@ -97,6 +130,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   function handleSelectCategory(category: string) {
     setActiveCategory(category);
+    updatePreferences({ lastCategory: category });
     if (category === 'Alle') {
       setSelectedMenu(null);
       setInfoItems(DEFAULT_INFO);
@@ -114,6 +148,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   function handleSelectMenu(menu: MenuSection) {
     setSelectedMenu(menu);
     setActiveCategory(menu.title);
+    updatePreferences({ lastCategory: menu.title });
     setInfoItems([
       `Utvalgte retter fra ${menu.title.toLowerCase()}.`,
       'Se under for detaljer om retten.',

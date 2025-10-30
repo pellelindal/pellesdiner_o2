@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import CTAButton from '../components/CTAButton';
 import { colors } from '../theme';
 import { RootTabParamList } from '../navigation/types';
+import { usePreferences } from '../context/PreferencesContext';
 import {
   Booking,
   createBooking,
@@ -17,6 +18,7 @@ import {
 type BookingScreenProps = BottomTabScreenProps<RootTabParamList, 'Bestilling'>;
 
 export default function BookingScreen({ navigation }: BookingScreenProps) {
+  const { ready: prefsReady, preferences } = usePreferences();
   const [name, setName] = useState('');
   const [guestCount, setGuestCount] = useState('');
   const [notes, setNotes] = useState('');
@@ -44,6 +46,17 @@ export default function BookingScreen({ navigation }: BookingScreenProps) {
   useEffect(() => {
     loadLatest();
   }, [loadLatest]);
+
+  // Apply persisted defaults if no booking exists
+  useEffect(() => {
+    if (!prefsReady || latestBooking) return;
+    if (!name && preferences.name) {
+      setName(preferences.name);
+    }
+    if (!guestCount && preferences.defaultGuestCount && Number.isFinite(preferences.defaultGuestCount)) {
+      setGuestCount(String(preferences.defaultGuestCount));
+    }
+  }, [prefsReady, latestBooking, preferences.name, preferences.defaultGuestCount, name, guestCount]);
 
   const bookingPayload = useMemo(() => ({
     name: name.trim(),

@@ -28,14 +28,5 @@
       ]
     }
   ],
-  "bookings": [
-    {
-      "name": "Pelle",
-      "guestCount": 1,
-      "notes": "Q",
-      "updatedAt": "2025-10-19T20:34:46.983Z",
-      "createdAt": "2025-10-19T20:27:54.107Z",
-      "id": 2
-    }
-  ]
+  "bookings": []
 }

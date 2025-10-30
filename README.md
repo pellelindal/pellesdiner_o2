@@ -48,3 +48,10 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Settings & Persistence
+
+- The app stores personal preferences locally using AsyncStorage.
+- Open the `Innstillinger` tab to set your name and a default guest count.
+- These values prefill the booking form after app restarts when no server booking is present.
+ - The app also remembers your last selected menu category on the Home screen.

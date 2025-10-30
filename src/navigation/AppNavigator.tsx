@@ -4,6 +4,7 @@ import { enableScreens } from 'react-native-screens';
 import HomeScreen from '../screens/HomeScreen';
 import BookingScreen from '../screens/BookingScreen';
 import ContactScreen from '../screens/ContactScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import { RootTabParamList } from './types';
 
 enableScreens();
@@ -24,6 +25,7 @@ export default function AppNavigator() {
       <Tab.Screen name="Hjem" component={HomeScreen} />
       <Tab.Screen name="Bestilling" component={BookingScreen} />
       <Tab.Screen name="Kontakt" component={ContactScreen} />
+      <Tab.Screen name="Innstillinger" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }
